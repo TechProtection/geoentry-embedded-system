@@ -1,0 +1,99 @@
+{
+  "version": 1,
+  "author": "GeoEntry-TechProtection",
+  "editor": "wokwi",
+  "parts": [
+    { "type": "wokwi-esp32-devkit-v1", "id": "esp", "top": 0, "left": 0, "attrs": {} },
+    {
+      "type": "wokwi-led",
+      "id": "led_main",
+      "top": -138,
+      "left": 147.8,
+      "attrs": { "color": "red" }
+    },
+    {
+      "type": "wokwi-led",
+      "id": "led_status",
+      "top": -70.8,
+      "left": 320.6,
+      "attrs": { "color": "green" }
+    },
+    { "type": "wokwi-led", "id": "led_wifi", "top": 0, "left": 300, "attrs": { "color": "blue" } },
+    {
+      "type": "wokwi-buzzer",
+      "id": "buzzer1",
+      "top": 64.5,
+      "left": 426.9,
+      "rotate": 90,
+      "attrs": {}
+    },
+    {
+      "type": "wokwi-pushbutton",
+      "id": "btn1",
+      "top": 246.2,
+      "left": 163.2,
+      "attrs": { "color": "red" }
+    },
+    {
+      "type": "wokwi-pushbutton",
+      "id": "btn2",
+      "top": 332.6,
+      "left": 172.8,
+      "attrs": { "color": "green" }
+    },
+    {
+      "type": "wokwi-resistor",
+      "id": "r1",
+      "top": -35,
+      "left": 104.75,
+      "rotate": 270,
+      "attrs": { "value": "220" }
+    },
+    {
+      "type": "wokwi-resistor",
+      "id": "r2",
+      "top": -24.85,
+      "left": 211.2,
+      "attrs": { "value": "220" }
+    },
+    {
+      "type": "wokwi-resistor",
+      "id": "r3",
+      "top": 186.35,
+      "left": 192,
+      "attrs": { "value": "220" }
+    }
+  ],
+  "connections": [
+    [ "esp:TX0", "$serialMonitor:RX", "", [] ],
+    [ "esp:RX0", "$serialMonitor:TX", "", [] ],
+    [ "esp:GPIO2", "r1:1", "red", [ "h0" ] ],
+    [ "r1:2", "led_main:A", "red", [ "h0" ] ],
+    [ "esp:GPIO4", "r2:1", "green", [ "h0" ] ],
+    [ "r2:2", "led_status:A", "green", [ "h0" ] ],
+    [ "esp:GPIO5", "r3:1", "blue", [ "h0" ] ],
+    [ "r3:2", "led_wifi:A", "blue", [ "h0" ] ],
+    [ "esp:GPIO19", "buzzer1:1", "purple", [ "h0" ] ],
+    [ "esp:GPIO13", "btn1:1.l", "orange", [ "h0" ] ],
+    [ "esp:GPIO12", "btn2:1.l", "yellow", [ "h0" ] ],
+    [ "esp:GND", "led_main:C", "red", [ "h0" ] ],
+    [ "esp:GND", "led_status:C", "green", [ "h0" ] ],
+    [ "esp:GND", "led_wifi:C", "blue", [ "h0" ] ],
+    [ "esp:GND", "buzzer1:2", "black", [ "h0" ] ],
+    [ "esp:GND", "btn1:2.l", "black", [ "h0" ] ],
+    [ "esp:GND", "btn2:2.l", "black", [ "h0" ] ],
+    [ "led_main:C", "esp:GND.1", "green", [ "v0" ] ],
+    [ "buzzer1:1", "esp:D19", "green", [ "v0" ] ],
+    [ "buzzer1:2", "esp:GND.1", "green", [ "v0" ] ],
+    [ "esp:D2", "r1:1", "green", [ "h0" ] ],
+    [ "esp:D4", "r2:1", "green", [ "h0" ] ],
+    [ "r3:1", "esp:D5", "green", [ "v0" ] ],
+    [ "btn1:1.l", "esp:D13", "green", [ "h0" ] ],
+    [ "btn2:1.l", "esp:D12", "green", [ "h0" ] ],
+    [ "btn1:2.l", "esp:GND.2", "green", [ "h0" ] ],
+    [ "btn2:2.l", "esp:GND.2", "green", [ "h0" ] ],
+    [ "led_status:C", "esp:GND.1", "green", [ "v0" ] ],
+    [ "led_wifi:C", "esp:GND.1", "green", [ "v0" ] ]
+  ],
+  "dependencies": {}
+}
