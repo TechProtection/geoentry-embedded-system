@@ -2,3 +2,6 @@
 # See https://docs.wokwi.com/guides/libraries
 
 ArduinoJson
+WiFi
+HttpClient
+
