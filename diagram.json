@@ -26,13 +26,6 @@
       "attrs": { "color": "blue" }
     },
     {
-      "type": "wokwi-pushbutton",
-      "id": "btn_reset",
-      "top": -41.8,
-      "left": 489.6,
-      "attrs": { "color": "red" }
-    },
-    {
       "type": "wokwi-resistor",
       "id": "r1",
       "top": -83,
@@ -58,8 +51,7 @@
     },
     { "type": "wokwi-gnd", "id": "gnd1", "top": -86.4, "left": 153, "attrs": {} },
     { "type": "wokwi-gnd", "id": "gnd3", "top": -67.2, "left": 258.6, "attrs": {} },
-    { "type": "wokwi-gnd", "id": "gnd4", "top": -67.2, "left": 354.6, "attrs": {} },
-    { "type": "wokwi-gnd", "id": "gnd5", "top": 10.1, "left": 461.1, "rotate": 90, "attrs": {} }
+    { "type": "wokwi-gnd", "id": "gnd4", "top": -67.2, "left": 354.6, "attrs": {} }
   ],
   "connections": [
     [ "esp:TX0", "$serialMonitor:RX", "", [] ],
@@ -70,11 +62,9 @@
     [ "r2:2", "led_status:A", "orange", [ "v0" ] ],
     [ "esp:D5", "r3:1", "blue", [ "h95.7", "v-38.4", "h225.2" ] ],
     [ "r3:2", "led_wifi:A", "blue", [ "v0" ] ],
-    [ "btn_reset:1.l", "esp:D0", "purple", [ "v0" ] ],
     [ "gnd1:GND", "led_proximity:C", "black", [ "v0" ] ],
     [ "gnd3:GND", "led_status:C", "black", [ "v0" ] ],
-    [ "gnd4:GND", "led_wifi:C", "black", [ "v0" ] ],
-    [ "gnd5:GND", "btn_reset:2.l", "black", [ "v0" ] ]
+    [ "gnd4:GND", "led_wifi:C", "black", [ "v0" ] ]
   ],
   "dependencies": {}
 }

@@ -1,13 +1,7 @@
 # Wokwi Library List
 # See https://docs.wokwi.com/guides/libraries
 
-# Librerías necesarias para el proyecto
 ArduinoJson
 WiFi
-HTTPClient
-
-# Librerías del ESP32 (incluidas automáticamente)
-# - WiFi.h (para conectividad WiFi)
-# - HTTPClient.h (para peticiones HTTP)
-# - ArduinoJson.h (para parsear JSON)
+HttpClient
 
