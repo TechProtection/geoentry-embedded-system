@@ -76,12 +76,6 @@ const char* WIFI_SSID = "Wokwi-GUEST";
 const char* WIFI_PASSWORD = "";
 ```
 
-### Configuración del API
-```cpp
-const char* API_URL = "https://geoentry-edge-api.onrender.com/api/v1/proximity-events/device/";
-const char* DEVICE_ID = "7b4cdbcd-2bf0-4047-9355-05e33babf2c9";
-```
-
 ### Configuración de Pines
 ```cpp
 LED_PROXIMITY_PIN = 2  // D2 - LED Rojo
@@ -162,6 +156,6 @@ El proyecto incluye configuración completa para simulación en [Wokwi](https://
 
 Creative Commons Attribution-NoDerivatives 4.0 International (CC BY-ND 4.0)
 
-**Desarrollado por**: Angel Velasquez - GeoEntry Development Team  
+**Desarrollado por**: TechProtection - GeoEntry Development Team  
 **Fecha**: Julio 4, 2025  
 **Versión**: 1.0.0
