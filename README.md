@@ -270,6 +270,6 @@ El proyecto incluye configuración completa para simulación en [Wokwi](https://
 
 Creative Commons Attribution-NoDerivatives 4.0 International (CC BY-ND 4.0)
 
-**Desarrollado por**: Angel Velasquez - GeoEntry Development Team  
+**Desarrollado por**: TechProtection - GeoEntry Development Team  
 **Fecha**: Julio 4, 2025  
 **Versión**: 1.0.0
