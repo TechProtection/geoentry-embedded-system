@@ -53,6 +53,11 @@ private:
     void updateSmartLedPatterns();
     void calculateLedPatterns();
     int getLedPattern(bool sensor1, bool sensor2);
+    void turnOnAllSensorsOnEnter();
+    void turnOffAllSensorsOnExit();
+    void turnOnSensor(String sensorId, String sensorType);
+    void turnOffSensor(String sensorId, String sensorType);
+    String getPatternDescription(int pattern, String sensor1, String sensor2);
 
 public:
     GeoEntryDevice(
@@ -60,7 +65,7 @@ public:
         const String& wifiPassword = "",
         const String& apiURL = "https://geoentry-edge-api.onrender.com/api/v1/proximity-events/device/",
         const String& deviceID = "7b4cdbcd-2bf0-4047-9355-05e33babf2c9",
-        const String& userID = "a8c6b41b-8c4d-4b8a-9e2f-1a3b5c7d9e0f"
+        const String& userID = "dd380cd7-852b-4855-9c68-c45f71b62521"
     );
     
     ~GeoEntryDevice();
