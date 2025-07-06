@@ -3,7 +3,7 @@
 GeoEntryDevice::GeoEntryDevice(const String& wifiSSID, const String& wifiPassword, 
                                const String& apiURL, const String& deviceID, const String& userID)
     : ssid(wifiSSID), password(wifiPassword), serverURL(apiURL), deviceId(deviceID), userId(userID),
-      lastCheck(0), checkInterval(5000), lastSensorCheck(0), sensorCheckInterval(10000), 
+      lastCheck(0), checkInterval(20000), lastSensorCheck(0), sensorCheckInterval(20000), 
       lastEventId(""), userAtHome(false),
       tvSensorActive(false), luzSensorActive(false), acSensorActive(false), cafeteraSensorActive(false),
       lastLed1Blink(0), lastLed2Blink(0), led1BlinkState(false), led2BlinkState(false),
@@ -137,7 +137,7 @@ void GeoEntryDevice::checkProximityEvents() {
     }
     
     HTTPClient http;
-    String url = serverURL + deviceId;
+    String url = serverURL + "proximity-events/device/" + deviceId;
     
     http.begin(url.c_str());
     http.addHeader("Content-Type", "application/json");
@@ -276,7 +276,7 @@ void GeoEntryDevice::checkSensorStates() {
     }
     
     HTTPClient http;
-    String url = "https://geoentry-edge-api.onrender.com/api/v1/sensors/user/" + userId;
+    String url = "https://geoentry-edge-api.onrender.com/sensors/user/" + userId;
     
     http.begin(url.c_str());
     http.addHeader("Content-Type", "application/json");
@@ -287,8 +287,6 @@ void GeoEntryDevice::checkSensorStates() {
     
     if (httpResponseCode > 0) {
         String response = http.getString();
-        Serial.println("Respuesta sensores:");
-        Serial.println(response);
         
         processSensorStates(response);
     } else {
@@ -332,13 +330,14 @@ void GeoEntryDevice::processSensorStates(String jsonResponse) {
         
         Serial.println("Sensor: " + name + " (" + type + ") - " + (isActive ? "ACTIVO" : "INACTIVO"));
         
-        if (type == "tv") {
+        // Mapear tipos de sensores correctos de la base de datos
+        if (type == "led_tv") {
             tvSensorActive = isActive;
-        } else if (type == "luz") {
+        } else if (type == "smart_light") {
             luzSensorActive = isActive;
-        } else if (type == "aire_acondicionado") {
+        } else if (type == "air_conditioner") {
             acSensorActive = isActive;
-        } else if (type == "cafetera") {
+        } else if (type == "coffee_maker") {
             cafeteraSensorActive = isActive;
         }
     }
@@ -498,7 +497,7 @@ void GeoEntryDevice::turnOnAllSensorsOnEnter() {
     Serial.println("🏠 USUARIO ENTRÓ - Encendiendo todos los sensores automáticamente...");
     
     HTTPClient http;
-    String url = "https://geoentry-edge-api.onrender.com/api/v1/sensors/user/" + userId;
+    String url = "https://geoentry-edge-api.onrender.com/sensors/user/" + userId;
     
     http.begin(url.c_str());
     http.addHeader("Content-Type", "application/json");
@@ -571,7 +570,7 @@ void GeoEntryDevice::turnOffAllSensorsOnExit() {
     Serial.println("🚨 USUARIO SALIÓ - Apagando todos los sensores automáticamente...");
     
     HTTPClient http;
-    String url = "https://geoentry-edge-api.onrender.com/api/v1/sensors/user/" + userId;
+    String url = "https://geoentry-edge-api.onrender.com/sensors/user/" + userId;
     
     http.begin(url.c_str());
     http.addHeader("Content-Type", "application/json");
@@ -645,7 +644,7 @@ void GeoEntryDevice::turnOnSensor(String sensorId, String sensorType) {
     Serial.println("🔌 Encendiendo sensor: " + sensorType + " (ID: " + sensorId + ")");
     
     HTTPClient http;
-    String url = "https://geoentry-edge-api.onrender.com/api/v1/sensors/" + sensorId + "/status";
+    String url = "https://geoentry-edge-api.onrender.com/sensors/" + sensorId + "/status";
     
     http.begin(url.c_str());
     http.addHeader("Content-Type", "application/json");
@@ -653,7 +652,8 @@ void GeoEntryDevice::turnOnSensor(String sensorId, String sensorType) {
     // Body para encender sensor
     String jsonBody = "{\"isActive\": true}";
     
-    int httpResponseCode = http.PUT(jsonBody);
+    // Usar sendRequest para PATCH ya que no todos los ESP32 tienen PATCH directo
+    int httpResponseCode = http.sendRequest("PATCH", jsonBody);
     
     if (httpResponseCode == 200) {
         Serial.println("✅ " + sensorType + " encendido exitosamente");
@@ -668,7 +668,7 @@ void GeoEntryDevice::turnOffSensor(String sensorId, String sensorType) {
     Serial.println("🔌 Apagando sensor: " + sensorType + " (ID: " + sensorId + ")");
     
     HTTPClient http;
-    String url = "https://geoentry-edge-api.onrender.com/api/v1/sensors/" + sensorId + "/status";
+    String url = "https://geoentry-edge-api.onrender.com/sensors/" + sensorId + "/status";
     
     http.begin(url.c_str());
     http.addHeader("Content-Type", "application/json");
@@ -676,7 +676,8 @@ void GeoEntryDevice::turnOffSensor(String sensorId, String sensorType) {
     // Body para apagar sensor
     String jsonBody = "{\"isActive\": false}";
     
-    int httpResponseCode = http.PUT(jsonBody);
+    // Usar sendRequest para PATCH ya que no todos los ESP32 tienen PATCH directo
+    int httpResponseCode = http.sendRequest("PATCH", jsonBody);
     
     if (httpResponseCode == 200) {
         Serial.println("✅ " + sensorType + " apagado exitosamente");

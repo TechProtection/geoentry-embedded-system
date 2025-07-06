@@ -63,7 +63,7 @@ public:
     GeoEntryDevice(
         const String& wifiSSID = "Wokwi-GUEST",
         const String& wifiPassword = "",
-        const String& apiURL = "https://geoentry-edge-api.onrender.com/api/v1/proximity-events/device/",
+        const String& apiURL = "https://geoentry-edge-api.onrender.com/api/v1/",
         const String& deviceID = "7b4cdbcd-2bf0-4047-9355-05e33babf2c9",
         const String& userID = "dd380cd7-852b-4855-9c68-c45f71b62521"
     );

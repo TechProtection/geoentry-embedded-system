@@ -92,15 +92,15 @@ const char* USER_ID = "a8c6b41b-8c4d-4b8a-9e2f-1a3b5c7d9e0f";
 
 ### Configuración de Pines
 ```cpp
-LED_PROXIMITY_PIN = 2  // D2 - LED Rojo (Proximidad)
-LED_SMART1_PIN = 4     // D4 - LED Verde (TV/Luz)
-LED_SMART2_PIN = 5     // D5 - LED Azul (AC/Cafetera)
+LED_PROXIMITY_PIN = 12  // D12 - LED Rojo (Proximidad)
+LED_SMART1_PIN = 13     // D14 - LED Verde (TV/Luz)
+LED_SMART2_PIN = 14    // D13 - LED Azul (AC/Cafetera)
 ```
 
 ### Configuración de Intervalos
 ```cpp
-PROXIMITY_CHECK_INTERVAL = 5000   // 5 segundos
-SENSOR_CHECK_INTERVAL = 10000     // 10 segundos
+PROXIMITY_CHECK_INTERVAL = 20000   // 20 segundos
+SENSOR_CHECK_INTERVAL = 20000     // 20 segundos
 ```
 
 ## Funcionamiento del Sistema
