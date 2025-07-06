@@ -1,19 +1,23 @@
 #include "GeoEntryDevice.h"
 
 GeoEntryDevice::GeoEntryDevice(const String& wifiSSID, const String& wifiPassword, 
-                               const String& apiURL, const String& deviceID)
-    : ssid(wifiSSID), password(wifiPassword), serverURL(apiURL), deviceId(deviceID),
-      lastCheck(0), checkInterval(5000), lastEventId(""), userAtHome(false) {
+                               const String& apiURL, const String& deviceID, const String& userID)
+    : ssid(wifiSSID), password(wifiPassword), serverURL(apiURL), deviceId(deviceID), userId(userID),
+      lastCheck(0), checkInterval(5000), lastSensorCheck(0), sensorCheckInterval(10000), 
+      lastEventId(""), userAtHome(false),
+      tvSensorActive(false), luzSensorActive(false), acSensorActive(false), cafeteraSensorActive(false),
+      lastLed1Blink(0), lastLed2Blink(0), led1BlinkState(false), led2BlinkState(false),
+      led1Pattern(0), led2Pattern(0) {
     
     proximityLed = nullptr;
-    statusLed = nullptr;
-    wifiLed = nullptr;
+    smartLed1 = nullptr;
+    smartLed2 = nullptr;
 }
 
 GeoEntryDevice::~GeoEntryDevice() {
     delete proximityLed;
-    delete statusLed;
-    delete wifiLed;
+    delete smartLed1;
+    delete smartLed2;
 }
 
 void GeoEntryDevice::init() {
@@ -25,52 +29,64 @@ void GeoEntryDevice::init() {
     WiFi.begin(ssid.c_str(), password.c_str());
     Serial.print("Conectando a WiFi");
     
-    statusLed->handle(LedCommands::TURN_ON);
-    
+    // Patrón de espera mientras conecta
     while (WiFi.status() != WL_CONNECTED) {
         delay(500);
         Serial.print(".");
-        statusLed->handle(LedCommands::TOGGLE);
+        smartLed1->handle(LedCommands::TOGGLE);
     }
     
-    setWiFiStatus(true);
-    on(GeoEntryEvents::WIFI_CONNECTED);
+    // WiFi conectado - patrón de éxito
+    smartLed1->handle(LedCommands::TURN_ON);
+    smartLed2->handle(LedCommands::TURN_ON);
+    delay(1000);
+    smartLed1->handle(LedCommands::TURN_OFF);
+    smartLed2->handle(LedCommands::TURN_OFF);
     
     Serial.println();
     Serial.println("WiFi conectado!");
     Serial.print("Dirección IP: ");
     Serial.println(WiFi.localIP());
     
+    on(GeoEntryEvents::WIFI_CONNECTED);
+    
     Serial.println("GeoEntry Device iniciado correctamente");
-    Serial.println("Monitoreando eventos de proximidad...");
+    Serial.println("Monitoreando eventos de proximidad y sensores inteligentes...");
 }
 
 void GeoEntryDevice::initializeLeds() {
-    proximityLed = new Led(2, false);
-    statusLed = new Led(4, false);   
-    wifiLed = new Led(5, false);
+    proximityLed = new Led(2, false);  // LED rojo para proximidad
+    smartLed1 = new Led(4, false);     // LED verde para TV/Luz
+    smartLed2 = new Led(5, false);     // LED azul para AC/Cafetera
     
     proximityLed->turnOff(); 
-    statusLed->turnOn();
-    wifiLed->turnOff(); 
+    smartLed1->turnOff();
+    smartLed2->turnOff();
+} 
 
 void GeoEntryDevice::loop() {
     if (WiFi.status() != WL_CONNECTED) {
-        if (wifiLed->getState()) {
-            setWiFiStatus(false);
-            on(GeoEntryEvents::WIFI_DISCONNECTED);
-        }
+        on(GeoEntryEvents::WIFI_DISCONNECTED);
         reconnectWiFi();
         return;
     }
     
+    // Verificar eventos de proximidad
     if (millis() - lastCheck >= checkInterval) {
         handle(GeoEntryCommands::CHECK_PROXIMITY);
         lastCheck = millis();
     }
     
-    updateSystemStatus();
-    delay(100);
+    // Verificar estados de sensores
+    if (millis() - lastSensorCheck >= sensorCheckInterval) {
+        handle(GeoEntryCommands::CHECK_SENSORS);
+        lastSensorCheck = millis();
+    }
+    
+    // Actualizar patrones de parpadeo de LEDs inteligentes
+    updateSmartLedPatterns();
+    
+    delay(50); // Reducido para mejor respuesta de los patrones
 }
 
 void GeoEntryDevice::on(Event event) {
@@ -84,20 +100,28 @@ void GeoEntryDevice::on(Event event) {
         userAtHome = false;
     } else if (event == GeoEntryEvents::WIFI_CONNECTED) {
         Serial.println("📶 WiFi conectado");
-        statusLed->handle(LedCommands::TURN_ON);
+        // Patrón de éxito en LEDs inteligentes
+        smartLed1->blink(2, 200);
+        smartLed2->blink(2, 200);
     } else if (event == GeoEntryEvents::WIFI_DISCONNECTED) {
         Serial.println("📶 WiFi desconectado");
-        statusLed->handle(LedCommands::BLINK);
+        // Apagar LEDs inteligentes cuando no hay WiFi
+        smartLed1->handle(LedCommands::TURN_OFF);
+        smartLed2->handle(LedCommands::TURN_OFF);
     } else if (event == GeoEntryEvents::API_REQUEST_SUCCESS) {
-        statusLed->blink(1, 100); 
+        // Breve destello para indicar comunicación exitosa
     } else if (event == GeoEntryEvents::API_REQUEST_FAILED) {
-        statusLed->blink(3, 200);
+        // Patrón de error
+        smartLed1->blink(3, 100);
+        smartLed2->blink(3, 100);
     }
 }
 
 void GeoEntryDevice::handle(Command command) {
     if (command == GeoEntryCommands::CHECK_PROXIMITY) {
         checkProximityEvents();
+    } else if (command == GeoEntryCommands::CHECK_SENSORS) {
+        checkSensorStates();
     } else if (command == GeoEntryCommands::RECONNECT_WIFI) {
         reconnectWiFi();
     } else if (command == GeoEntryCommands::RESET_SYSTEM) {
@@ -239,10 +263,156 @@ void GeoEntryDevice::reconnectWiFi() {
 }
 
 void GeoEntryDevice::updateSystemStatus() {
-    static unsigned long lastStatusBlink = 0;
-    if (millis() - lastStatusBlink >= 2000) {
-        statusLed->blink(1, 50);
-        lastStatusBlink = millis();
+    // Función mantenida para compatibilidad pero ya no usa LED de estado
+    // Los LEDs inteligentes muestran ahora el estado del sistema
+}
+
+void GeoEntryDevice::checkSensorStates() {
+    if (WiFi.status() != WL_CONNECTED) {
+        return;
+    }
+    
+    HTTPClient http;
+    String url = "https://geoentry-edge-api.onrender.com/api/v1/sensors/user/" + userId;
+    
+    http.begin(url.c_str());
+    http.addHeader("Content-Type", "application/json");
+    
+    Serial.println("Consultando sensores: " + url);
+    
+    int httpResponseCode = http.GET();
+    
+    if (httpResponseCode > 0) {
+        String response = http.getString();
+        Serial.println("Respuesta sensores:");
+        Serial.println(response);
+        
+        processSensorStates(response);
+    } else {
+        Serial.printf("Error en petición de sensores: %d\n", httpResponseCode);
+    }
+    
+    http.end();
+}
+
+void GeoEntryDevice::processSensorStates(String jsonResponse) {
+    DynamicJsonDocument doc(4096);
+    DeserializationError error = deserializeJson(doc, jsonResponse);
+    
+    if (error) {
+        Serial.print("Error parsing sensors JSON: ");
+        Serial.println(error.c_str());
+        return;
+    }
+    
+    // Resetear estados
+    tvSensorActive = false;
+    luzSensorActive = false;
+    acSensorActive = false;
+    cafeteraSensorActive = false;
+    
+    JsonArray sensors;
+    if (doc.is<JsonArray>()) {
+        sensors = doc.as<JsonArray>();
+    } else if (doc["data"].is<JsonArray>()) {
+        sensors = doc["data"];
+    } else {
+        Serial.println("Formato de respuesta de sensores inesperado");
+        return;
+    }
+    
+    Serial.println("=== ESTADOS DE SENSORES ===");
+    for (JsonObject sensor : sensors) {
+        String name = sensor["name"].as<String>();
+        String type = sensor["sensor_type"].as<String>();
+        bool isActive = sensor["isActive"];
+        
+        Serial.println("Sensor: " + name + " (" + type + ") - " + (isActive ? "ACTIVO" : "INACTIVO"));
+        
+        if (type == "tv") {
+            tvSensorActive = isActive;
+        } else if (type == "luz") {
+            luzSensorActive = isActive;
+        } else if (type == "aire_acondicionado") {
+            acSensorActive = isActive;
+        } else if (type == "cafetera") {
+            cafeteraSensorActive = isActive;
+        }
+    }
+    
+    calculateLedPatterns();
+    Serial.println("============================");
+}
+
+void GeoEntryDevice::calculateLedPatterns() {
+    // LED Verde (Pin 4): TV y Luz
+    led1Pattern = getLedPattern(tvSensorActive, luzSensorActive);
+    
+    // LED Azul (Pin 5): AC y Cafetera  
+    led2Pattern = getLedPattern(acSensorActive, cafeteraSensorActive);
+    
+    Serial.println("Patrones calculados:");
+    Serial.println("LED Verde (TV/Luz): " + String(led1Pattern));
+    Serial.println("LED Azul (AC/Cafetera): " + String(led2Pattern));
+}
+
+int GeoEntryDevice::getLedPattern(bool sensor1, bool sensor2) {
+    if (!sensor1 && !sensor2) return 0;  // Ambos apagados = LED apagado
+    if (sensor1 && sensor2) return 1;     // Ambos encendidos = LED sólido
+    if (sensor1 && !sensor2) return 2;    // Solo sensor1 = parpadeo lento
+    if (!sensor1 && sensor2) return 3;    // Solo sensor2 = parpadeo rápido
+    return 0;
+}
+
+void GeoEntryDevice::updateSmartLedPatterns() {
+    unsigned long currentTime = millis();
+    
+    // Manejar LED Verde (TV/Luz)
+    switch (led1Pattern) {
+        case 0: // Apagado
+            smartLed1->setState(false);
+            break;
+        case 1: // Sólido
+            smartLed1->setState(true);
+            break;
+        case 2: // Parpadeo lento (1000ms)
+            if (currentTime - lastLed1Blink >= 1000) {
+                led1BlinkState = !led1BlinkState;
+                smartLed1->setState(led1BlinkState);
+                lastLed1Blink = currentTime;
+            }
+            break;
+        case 3: // Parpadeo rápido (300ms)
+            if (currentTime - lastLed1Blink >= 300) {
+                led1BlinkState = !led1BlinkState;
+                smartLed1->setState(led1BlinkState);
+                lastLed1Blink = currentTime;
+            }
+            break;
+    }
+    
+    // Manejar LED Azul (AC/Cafetera)
+    switch (led2Pattern) {
+        case 0: // Apagado
+            smartLed2->setState(false);
+            break;
+        case 1: // Sólido
+            smartLed2->setState(true);
+            break;
+        case 2: // Parpadeo lento (1000ms)
+            if (currentTime - lastLed2Blink >= 1000) {
+                led2BlinkState = !led2BlinkState;
+                smartLed2->setState(led2BlinkState);
+                lastLed2Blink = currentTime;
+            }
+            break;
+        case 3: // Parpadeo rápido (300ms)
+            if (currentTime - lastLed2Blink >= 300) {
+                led2BlinkState = !led2BlinkState;
+                smartLed2->setState(led2BlinkState);
+                lastLed2Blink = currentTime;
+            }
+            break;
     }
 }
 
@@ -256,8 +426,16 @@ void GeoEntryDevice::setAPIConfiguration(const String& url, const String& device
     deviceId = deviceID;
 }
 
+void GeoEntryDevice::setUserConfiguration(const String& userID) {
+    userId = userID;
+}
+
 void GeoEntryDevice::setCheckInterval(unsigned long interval) {
     checkInterval = interval;
+}
+
+void GeoEntryDevice::setSensorCheckInterval(unsigned long interval) {
+    sensorCheckInterval = interval;
 }
 
 bool GeoEntryDevice::isUserAtHome() const {
@@ -280,18 +458,10 @@ void GeoEntryDevice::setProximityStatus(bool atHome) {
     }
 }
 
-void GeoEntryDevice::setSystemStatus(bool active) {
-    if (active) {
-        statusLed->handle(LedCommands::TURN_ON);
-    } else {
-        statusLed->handle(LedCommands::TURN_OFF);
-    }
+void GeoEntryDevice::setSmartLed1Pattern(int pattern) {
+    led1Pattern = pattern;
 }
 
-void GeoEntryDevice::setWiFiStatus(bool connected) {
-    if (connected) {
-        wifiLed->handle(LedCommands::TURN_ON);
-    } else {
-        wifiLed->handle(LedCommands::TURN_OFF);
-    }
+void GeoEntryDevice::setSmartLed2Pattern(int pattern) {
+    led2Pattern = pattern;
 }
